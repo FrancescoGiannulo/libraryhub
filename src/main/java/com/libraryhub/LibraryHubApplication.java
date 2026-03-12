@@ -1,4 +1,4 @@
-package com.libraryhub.libraryhub;
+package com.libraryhub;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
