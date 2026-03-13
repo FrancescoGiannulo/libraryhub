@@ -18,7 +18,7 @@ import java.util.List;
 public class User {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
-    private long id;
+    private Long id;    //chiave primaria
 
     @Column(nullable=false, unique=true, length=50)
     private String username;
@@ -34,6 +34,7 @@ public class User {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "user", cascade=CascadeType.ALL, fetch=FetchType.LAZY)
+    //a un utente sono associate più interfacce con i libri (una per libro)
     @Builder.Default
     private List<UserBook> userBooks=new ArrayList<>();
 }

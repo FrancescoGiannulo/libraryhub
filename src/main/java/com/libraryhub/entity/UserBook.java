@@ -8,15 +8,18 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_books", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "book_id"}))
+//unique constraint assicura che non esistano coppie (utente, libro) uguali. per ogni utente esiste una sola relazione (al più)
+// con un singolo libro
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserBook {
+    //include tutti i lati inversi delle relazioni con tabelle
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable=false)

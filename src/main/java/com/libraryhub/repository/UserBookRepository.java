@@ -11,6 +11,7 @@ import java.util.Optional;
 @Repository
 public interface UserBookRepository extends JpaRepository<UserBook, Long> {
 
+    //Non ha senso usare optional. se non sono presenti libri, restituisce lista vuota
     List<UserBook> findByUserId(Long userId);
 
     List<UserBook> findByUserIdAndStatus(Long userId, ReadingStatus status);
