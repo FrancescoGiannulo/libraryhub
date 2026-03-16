@@ -1,6 +1,7 @@
 package com.libraryhub.repository;
 
 import com.libraryhub.entity.Review;
+import com.libraryhub.entity.User;
 import com.libraryhub.entity.UserBook;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -27,4 +28,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {//Gestisc
     Double findAverageRatingByBookId(@Param("bookId") Long bookId);
 
     boolean existsByUserBook(UserBook userBook);
+
+    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.userBook.user = :user")
+    Double findAverageRatingByUser(@Param("user") User user);
 }
