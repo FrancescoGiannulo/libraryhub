@@ -2,6 +2,7 @@ package com.libraryhub.service;
 
 import com.libraryhub.dto.BookRequest;
 import com.libraryhub.dto.BookResponse;
+import com.libraryhub.dto.StatusUpdateRequest;
 import com.libraryhub.entity.Book;
 import com.libraryhub.entity.ReadingStatus;
 import com.libraryhub.entity.User;
@@ -11,43 +12,46 @@ import com.libraryhub.exception.ResourceNotFoundException;
 import com.libraryhub.exception.UnauthorizedException;
 import com.libraryhub.repository.BookRepository;
 import com.libraryhub.repository.UserBookRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class BookService {
 
     private final BookRepository bookRepository;
     private final UserBookRepository userBookRepository;
-
-    public BookService(BookRepository bookRepository, UserBookRepository userBookRepository) {
-        this.bookRepository = bookRepository;
-        this.userBookRepository = userBookRepository;
-    }
+    private final OpenLibraryClient openLibraryClient;
 
     public BookResponse addBook(BookRequest request, User user) {
-        // Cerca il libro per ISBN o crealo se non esiste
         Book book = bookRepository.findByIsbn(request.getIsbn())
                 .orElseGet(() -> {
-                    Book newBook = Book.builder()
-                            .isbn(request.getIsbn())
-                            .title("Unknown title")
-                            .author("Unknown author")
-                            .build();
+                    // Chiama Open Library — lancia ResourceNotFoundException se ISBN non trovato
+                    var dto = openLibraryClient.fetchByIsbn(request.getIsbn());
+
+                    Book newBook = new Book();
+                    newBook.setIsbn(request.getIsbn());
+                    newBook.setTitle(dto.getTitle() != null ? dto.getTitle() : "Unknown Title");
+                    newBook.setAuthor(dto.getFirstAuthorName());
+                    newBook.setGenre(dto.getFirstSubjectName());
+                    newBook.setPublishedYear(dto.extractYear());
+                    String coverUrl = dto.getCoverMediumUrl() != null
+                            ? dto.getCoverMediumUrl()
+                            : "https://covers.openlibrary.org/b/isbn/" + request.getIsbn() + "-M.jpg";
+                    newBook.setCoverUrl(coverUrl);
                     return bookRepository.save(newBook);
                 });
 
-        // Verifica che l'utente non abbia già questo libro
         if (userBookRepository.existsByUserAndBook(user, book)) {
             throw new DuplicateResourceException("Book already in your library");
         }
 
-        UserBook userBook = UserBook.builder()
-                .user(user)
-                .book(book)
-                .status(ReadingStatus.TO_READ)
-                .build();
+        UserBook userBook = new UserBook();
+        userBook.setUser(user);
+        userBook.setBook(book);
+        userBook.setStatus(ReadingStatus.TO_READ);
 
         UserBook saved = userBookRepository.save(userBook);
         return toResponse(saved);
@@ -69,8 +73,7 @@ public class BookService {
         }
 
         userBook.setStatus(status);
-        UserBook saved = userBookRepository.save(userBook);
-        return toResponse(saved);
+        return toResponse(userBookRepository.save(userBook));
     }
 
     public void deleteBook(Long userBookId, User user) {
