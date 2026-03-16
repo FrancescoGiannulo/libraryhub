@@ -1,6 +1,8 @@
 package com.libraryhub.repository;
 
+import com.libraryhub.entity.Book;
 import com.libraryhub.entity.ReadingStatus;
+import com.libraryhub.entity.User;
 import com.libraryhub.entity.UserBook;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -19,4 +21,8 @@ public interface UserBookRepository extends JpaRepository<UserBook, Long> {
     Optional<UserBook> findByUserIdAndBookId(Long userId, Long bookId);
 
     boolean existsByUserIdAndBookId(Long userId, Long bookId);
+
+    boolean existsByUserAndBook(User user, Book book);
+
+    List<UserBook> findByUser(User user);
 }

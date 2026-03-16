@@ -30,7 +30,11 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)  //csrf protection disabilitata perchè con jwt stateless  non serve (lavora con i cookie di sessione)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()    //pagine di register e login sono pubbliche
+                        .requestMatchers("/api/auth/**",
+                                "/api/auth/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**").permitAll()    //pagine di register e login sono pubbliche (Anche pagine di OpenAPI richiedono accesso non autenticato)
                         .anyRequest().authenticated()   //tutto il resto richiede autenticazione
                 )
                 .sessionManagement(session -> session

@@ -4,6 +4,7 @@ import com.libraryhub.dto.AuthResponse;
 import com.libraryhub.dto.LoginRequest;
 import com.libraryhub.dto.RegisterRequest;
 import com.libraryhub.entity.User;
+import com.libraryhub.exception.DuplicateResourceException;
 import com.libraryhub.repository.UserRepository;
 import com.libraryhub.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -25,10 +26,10 @@ public class AuthService {
 
         // 1. Verifica che email e username non siano già in uso
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already in use");
+            throw new DuplicateResourceException("Email already in use");
         }
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("Username already in use");
+            throw new DuplicateResourceException("Username already in use");
         }
 
         // 2. Costruisce l'entità User con la password hashata
