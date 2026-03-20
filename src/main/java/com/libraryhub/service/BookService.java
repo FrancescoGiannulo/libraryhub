@@ -5,6 +5,7 @@ import com.libraryhub.dto.BookResponse;
 import com.libraryhub.dto.StatusUpdateRequest;
 import com.libraryhub.entity.Book;
 import com.libraryhub.entity.ReadingStatus;
+import com.libraryhub.entity.Review;
 import com.libraryhub.entity.User;
 import com.libraryhub.entity.UserBook;
 import com.libraryhub.exception.DuplicateResourceException;
@@ -14,6 +15,7 @@ import com.libraryhub.repository.BookRepository;
 import com.libraryhub.repository.UserBookRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -25,6 +27,7 @@ public class BookService {
     private final UserBookRepository userBookRepository;
     private final OpenLibraryClient openLibraryClient;
 
+    @Transactional
     public BookResponse addBook(BookRequest request, User user) {
         Book book = bookRepository.findByIsbn(request.getIsbn())
                 .orElseGet(() -> {
@@ -57,6 +60,7 @@ public class BookService {
         return toResponse(saved);
     }
 
+    @Transactional(readOnly = true)
     public List<BookResponse> getMyBooks(User user) {
         return userBookRepository.findByUser(user)
                 .stream()
@@ -64,6 +68,7 @@ public class BookService {
                 .toList();
     }
 
+    @Transactional
     public BookResponse updateStatus(Long userBookId, ReadingStatus status, User user) {
         UserBook userBook = userBookRepository.findById(userBookId)
                 .orElseThrow(() -> new ResourceNotFoundException("UserBook not found with id: " + userBookId));
@@ -76,6 +81,7 @@ public class BookService {
         return toResponse(userBookRepository.save(userBook));
     }
 
+    @Transactional
     public void deleteBook(Long userBookId, User user) {
         UserBook userBook = userBookRepository.findById(userBookId)
                 .orElseThrow(() -> new ResourceNotFoundException("UserBook not found with id: " + userBookId));
@@ -89,6 +95,7 @@ public class BookService {
 
     private BookResponse toResponse(UserBook userBook) {
         Book book = userBook.getBook();
+        Review review = userBook.getReview();
         return new BookResponse(
                 userBook.getId(),
                 book.getId(),
@@ -99,7 +106,10 @@ public class BookService {
                 book.getGenre(),
                 book.getPublishedYear(),
                 book.getDescription(),
-                userBook.getStatus().name()
+                userBook.getStatus().name(),
+                review != null ? review.getId() : null,
+                review != null ? review.getRating() : null,
+                review != null ? review.getComment() : null
         );
     }
 }

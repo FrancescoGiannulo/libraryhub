@@ -11,6 +11,7 @@ import com.libraryhub.exception.UnauthorizedException;
 import com.libraryhub.repository.ReviewRepository;
 import com.libraryhub.repository.UserBookRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public class ReviewService {
         this.userBookRepository = userBookRepository;
     }
 
+    @Transactional
     public ReviewResponse addReview(ReviewRequest request, User user) {
         UserBook userBook = userBookRepository.findById(request.getUserBookId())
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -48,6 +50,7 @@ public class ReviewService {
         return toResponse(reviewRepository.save(review));
     }
 
+    @Transactional
     public ReviewResponse updateReview(Long reviewId, ReviewRequest request, User user) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -63,6 +66,7 @@ public class ReviewService {
         return toResponse(reviewRepository.save(review));
     }
 
+    @Transactional(readOnly = true)
     public List<ReviewResponse> getReviewsByBook(Long bookId) {
         return reviewRepository.findByBookId(bookId)
                 .stream()

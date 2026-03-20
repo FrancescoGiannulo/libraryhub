@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Libreria — LibraryHub</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link th:href="@{/css/main.css}" rel="stylesheet" />
+</head>
+<body>
+
+<!-- ============================================================
+     NAVBAR
+     ============================================================ -->
+<nav class="lh-navbar">
+    <a href="/library" class="lh-navbar-brand">
+        <div class="lh-navbar-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                 stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+        </div>
+        <span class="lh-navbar-name">LibraryHub</span>
+    </a>
+
+    <div class="lh-navbar-links">
+        <a href="/library"   class="lh-nav-link active">Libreria</a>
+        <a href="/dashboard" class="lh-nav-link">Dashboard</a>
+    </div>
+
+    <div class="lh-navbar-user">
+        <span class="lh-user-name" id="navUsername"></span>
+        <div class="lh-user-avatar" id="navAvatar" title="Logout" onclick="API.logout()">?</div>
+    </div>
+</nav>
+
+<!-- ============================================================
+     HERO BANNER
+     ============================================================ -->
+<div class="lh-hero">
+    <div class="lh-hero-blob"></div>
+    <div class="lh-hero-inner">
+        <div class="lh-hero-label">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            La tua libreria personale
+        </div>
+
+        <p class="lh-hero-title" id="heroGreeting">Ciao! 👋</p>
+        <p class="lh-hero-sub"  id="heroSub">Caricamento statistiche…</p>
+
+        <div class="lh-hero-stats">
+            <div class="lh-stat-pill">
+                <div class="lh-stat-num" id="statTotal">—</div>
+                <div class="lh-stat-lbl">Totale libri</div>
+            </div>
+            <div class="lh-stat-pill">
+                <div class="lh-stat-num" id="statReading">—</div>
+                <div class="lh-stat-lbl">In lettura</div>
+            </div>
+            <div class="lh-stat-pill">
+                <div class="lh-stat-num" id="statRead">—</div>
+                <div class="lh-stat-lbl">Letti</div>
+            </div>
+            <div class="lh-stat-pill">
+                <div class="lh-stat-num" id="statRating">—</div>
+                <div class="lh-stat-lbl">Rating medio</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<div class="lh-main">
+
+    <!-- Toolbar -->
+    <div class="lh-toolbar">
+        <div class="lh-filters" id="filterBar">
+            <button class="lh-filter-btn active" data-filter="ALL">Tutti</button>
+            <button class="lh-filter-btn" data-filter="READING">In lettura</button>
+            <button class="lh-filter-btn" data-filter="TO_READ">Da leggere</button>
+            <button class="lh-filter-btn" data-filter="READ">Letti</button>
+        </div>
+
+        <button class="lh-btn-add" onclick="openAddModal()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Aggiungi libro
+        </button>
+    </div>
+
+    <!-- Books grid -->
+    <div id="booksGrid" class="lh-grid"></div>
+
+    <!-- Empty state -->
+    <div id="emptyState" class="lh-empty d-none">
+        <div class="lh-empty-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+                 stroke="#7c3aed" stroke-width="1.8" stroke-linecap="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+        </div>
+        <h3 id="emptyTitle">La tua libreria è vuota</h3>
+        <p id="emptyMsg">Aggiungi il tuo primo libro con il pulsante in alto a destra.</p>
+    </div>
+
+</div>
+
+<!-- ============================================================
+     MODAL — Aggiungi libro per ISBN
+     ============================================================ -->
+<div class="lh-modal-overlay d-none" id="addModalOverlay" onclick="closeAddModalIfOutside(event)">
+    <div class="lh-modal">
+        <div class="lh-modal-header">
+            <p class="lh-modal-title">Aggiungi un libro</p>
+            <p class="lh-modal-sub">Inserisci l'ISBN per cercare su Open Library</p>
+            <button class="lh-modal-close" onclick="closeAddModal()">✕</button>
+        </div>
+
+        <div class="lh-modal-body">
+            <!-- ISBN search -->
+            <div class="lh-isbn-input-wrap">
+                <input type="text" id="isbnInput" class="form-control"
+                       placeholder="es. 9780132350884" maxlength="20"
+                       onkeydown="if(event.key==='Enter') searchIsbn()" />
+                <button id="searchBtn" class="lh-btn-search" onclick="searchIsbn()">Cerca</button>
+            </div>
+
+            <div id="searchAlert" class="alert alert-danger auth-alert d-none"></div>
+
+            <!-- Book preview (hidden until found) -->
+            <div id="bookPreview" class="lh-book-preview d-none">
+                <div id="previewThumb" class="lh-preview-thumb-fallback lh-cov-1">A</div>
+                <div class="lh-preview-info">
+                    <div class="lh-preview-title"  id="previewTitle">—</div>
+                    <div class="lh-preview-author" id="previewAuthor">—</div>
+                    <div class="lh-preview-meta"   id="previewMeta">—</div>
+                </div>
+            </div>
+
+            <!-- Confirm button -->
+            <button id="confirmAddBtn" class="btn-lh-primary d-none" onclick="confirmAdd()">
+                Aggiungi alla libreria
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     MODAL — Recensione
+     ============================================================ -->
+<div class="lh-modal-overlay d-none" id="reviewModalOverlay" onclick="closeReviewModalIfOutside(event)">
+    <div class="lh-modal">
+        <div class="lh-modal-header">
+            <p class="lh-modal-title" id="reviewModalTitle">Aggiungi recensione</p>
+            <p class="lh-modal-sub" id="reviewModalBook"></p>
+            <button class="lh-modal-close" onclick="closeReviewModal()">✕</button>
+        </div>
+        <div class="lh-modal-body">
+
+            <div id="reviewAlert" class="alert alert-danger auth-alert d-none"></div>
+
+            <!-- Star picker -->
+            <div style="margin-bottom:1rem;">
+                <label style="font-size:.8rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.5rem;">Valutazione</label>
+                <div id="starPicker" style="display:flex;gap:.25rem;">
+                    <span class="lh-star-pick" data-v="1" onclick="pickStar(1)">★</span>
+                    <span class="lh-star-pick" data-v="2" onclick="pickStar(2)">★</span>
+                    <span class="lh-star-pick" data-v="3" onclick="pickStar(3)">★</span>
+                    <span class="lh-star-pick" data-v="4" onclick="pickStar(4)">★</span>
+                    <span class="lh-star-pick" data-v="5" onclick="pickStar(5)">★</span>
+                </div>
+            </div>
+
+            <!-- Comment -->
+            <div style="margin-bottom:1.25rem;">
+                <label for="reviewComment" style="font-size:.8rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.5rem;">Commento (opzionale)</label>
+                <textarea id="reviewComment" class="form-control" rows="3" maxlength="1000" placeholder="Scrivi un commento…" style="resize:vertical;"></textarea>
+            </div>
+
+            <button id="saveReviewBtn" class="btn-lh-primary" onclick="saveReview()">Salva recensione</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     TOAST
+     ============================================================ -->
+<div id="toast" class="lh-toast d-none"></div>
+
+<!-- ============================================================
+     SCRIPTS
+     ============================================================ -->
+<script th:src="@{/js/api.js}"></script>
+<script>
+
+    // ── State ────────────────────────────────────────────────
+    let allBooks     = [];   // tutti i libri dell'utente
+    let activeFilter = 'ALL';
+
+    // ── Init ─────────────────────────────────────────────────
+    (async function init() {
+        API.requireAuth();
+        setNavUser();
+        await Promise.all([loadStats(), loadBooks()]);
+        setupFilters();
+    })();
+
+    // ── Nav user ─────────────────────────────────────────────
+    function setNavUser() {
+        const payload = API.decodeToken();
+        const email   = payload?.sub || '';
+        const initial = email.charAt(0).toUpperCase() || '?';
+        document.getElementById('navAvatar').textContent   = initial;
+        document.getElementById('navUsername').textContent = email;
+        document.getElementById('heroGreeting').textContent = `Ciao, ${email.split('@')[0]} 👋`;
+    }
+
+    // ── Load stats ────────────────────────────────────────────
+    async function loadStats() {
+        try {
+            const s = await API.get('/api/stats/me');
+            if (!s) return;
+            document.getElementById('statTotal').textContent   = s.totalBooks   ?? 0;
+            document.getElementById('statReading').textContent = s.readingBooks  ?? 0;
+            document.getElementById('statRead').textContent    = s.readBooks     ?? 0;
+            document.getElementById('statRating').textContent  = s.averageRating
+                ? parseFloat(s.averageRating).toFixed(1)
+                : '—';
+            const read = s.readBooks ?? 0;
+            document.getElementById('heroSub').textContent =
+                read === 0 ? 'Aggiungi il tuo primo libro!'
+                    : read === 1 ? 'Hai letto 1 libro. Ottimo inizio!'
+                        :              `Hai letto ${read} libri. Continua così!`;
+        } catch (e) {
+            console.error('Stats error:', e);
+        }
+    }
+
+    // ── Load books ────────────────────────────────────────────
+    async function loadBooks() {
+        try {
+            allBooks = await API.get('/api/books/my') ?? [];
+            renderBooks();
+        } catch (e) {
+            console.error('Books error:', e);
+            showToast('Errore nel caricamento dei libri.', 'error');
+        }
+    }
+
+    // ── Filters ───────────────────────────────────────────────
+    function setupFilters() {
+        document.getElementById('filterBar').addEventListener('click', e => {
+            const btn = e.target.closest('.lh-filter-btn');
+            if (!btn) return;
+            document.querySelectorAll('.lh-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeFilter = btn.dataset.filter;
+            renderBooks();
+        });
+    }
+
+    function updateFilterCounts() {
+        const counts = { ALL: allBooks.length, READING: 0, TO_READ: 0, READ: 0 };
+        allBooks.forEach(b => { if (counts[b.status] !== undefined) counts[b.status]++; });
+        document.querySelectorAll('.lh-filter-btn').forEach(btn => {
+            const f = btn.dataset.filter;
+            const labels = { ALL: 'Tutti', READING: 'In lettura', TO_READ: 'Da leggere', READ: 'Letti' };
+            btn.textContent = `${labels[f]} (${counts[f]})`;
+        });
+    }
+
+    // ── Render ────────────────────────────────────────────────
+    function renderBooks() {
+        updateFilterCounts();
+
+        const filtered = activeFilter === 'ALL'
+            ? allBooks
+            : allBooks.filter(b => b.status === activeFilter);
+
+        const grid  = document.getElementById('booksGrid');
+        const empty = document.getElementById('emptyState');
+
+        if (filtered.length === 0) {
+            grid.innerHTML = '';
+            empty.classList.remove('d-none');
+            document.getElementById('emptyTitle').textContent =
+                activeFilter === 'ALL' ? 'La tua libreria è vuota' : 'Nessun libro in questa categoria';
+            document.getElementById('emptyMsg').textContent =
+                activeFilter === 'ALL'
+                    ? 'Aggiungi il tuo primo libro con il pulsante in alto a destra.'
+                    : 'Prova a cambiare filtro o aggiungi nuovi libri.';
+            return;
+        }
+
+        empty.classList.add('d-none');
+        grid.innerHTML = filtered.map(book => renderCard(book)).join('');
+    }
+
+    const COVER_CLASSES = ['lh-cov-1','lh-cov-2','lh-cov-3','lh-cov-4','lh-cov-5','lh-cov-6','lh-cov-7','lh-cov-8'];
+
+    function coverClass(id) {
+        return COVER_CLASSES[id % COVER_CLASSES.length];
+    }
+
+    function statusLabel(s) {
+        return s === 'READING' ? 'In lettura' : s === 'TO_READ' ? 'Da leggere' : 'Letto';
+    }
+
+    function statusClass(s) {
+        return s === 'READING' ? 'lh-status-reading' : s === 'TO_READ' ? 'lh-status-to_read' : 'lh-status-read';
+    }
+
+    function starsHtml(rating) {
+        if (!rating) return '';
+        let html = '<div class="lh-stars">';
+        for (let i = 1; i <= 5; i++) {
+            html += `<span class="lh-star ${i <= rating ? 'on' : 'off'}">★</span>`;
+        }
+        return html + '</div>';
+    }
+
+    function renderCard(book) {
+        const coverHtml = book.coverUrl
+            ? `<img src="${book.coverUrl}" alt="${escHtml(book.title)}"
+               style="width:100%;height:100%;object-fit:cover;"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+           <div class="lh-cover-fallback ${coverClass(book.bookId)}" style="display:none;">
+               <span class="lh-cover-letter">${(book.title || '?').charAt(0).toUpperCase()}</span>
+           </div>`
+            : `<div class="lh-cover-fallback ${coverClass(book.bookId)}">
+               <span class="lh-cover-letter">${(book.title || '?').charAt(0).toUpperCase()}</span>
+           </div>`;
+
+        const nextStatus = nextStatusOption(book.status);
+
+        return `
+    <div class="lh-book-card" data-id="${book.userBookId}">
+        <div class="lh-cover">
+            ${coverHtml}
+            <span class="lh-status-badge ${statusClass(book.status)}">${statusLabel(book.status)}</span>
+        </div>
+        <div class="lh-card-body">
+            <div class="lh-card-title" title="${escHtml(book.title)}">${escHtml(book.title)}</div>
+            <div class="lh-card-author" title="${escHtml(book.author)}">${escHtml(book.author)}</div>
+            ${book.genre ? `<span class="lh-card-genre">${escHtml(book.genre)}</span>` : ''}
+            ${starsHtml(book.rating)}
+        </div>
+        <div class="lh-card-actions">
+            ${nextStatus ? `<button class="lh-action-btn" onclick="updateStatus(event,${book.userBookId},'${nextStatus}')">→ ${statusLabel(nextStatus)}</button>` : ''}
+            <button class="lh-action-btn" onclick="openReviewModal(event,${book.userBookId},${book.reviewId ?? 'null'},${book.rating ?? 'null'},'${escHtml(book.comment ?? '')}','${escHtml(book.title)}')">${book.reviewId ? 'Modifica recensione' : 'Recensisci'}</button>
+            <button class="lh-action-btn danger" onclick="deleteBook(event,${book.userBookId},'${escHtml(book.title)}')">Rimuovi</button>
+        </div>
+    </div>`;
+    }
+
+    function nextStatusOption(current) {
+        if (current === 'TO_READ')  return 'READING';
+        if (current === 'READING')  return 'READ';
+        return null;
+    }
+
+    function escHtml(str) {
+        return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Status update ─────────────────────────────────────────
+    async function updateStatus(e, bookId, newStatus) {
+        e.stopPropagation();
+        try {
+            await API.patch(`/api/books/${bookId}/status`, { status: newStatus });
+            await Promise.all([loadBooks(), loadStats()]);
+            showToast(`Stato aggiornato: ${statusLabel(newStatus)}`, 'success');
+        } catch (err) {
+            showToast(err.message || 'Errore aggiornamento stato.', 'error');
+        }
+    }
+
+    // ── Delete book ───────────────────────────────────────────
+    async function deleteBook(e, bookId, title) {
+        e.stopPropagation();
+        if (!confirm(`Rimuovere "${title}" dalla libreria?`)) return;
+        try {
+            await API.delete(`/api/books/${bookId}`);
+            await Promise.all([loadBooks(), loadStats()]);
+            showToast('Libro rimosso dalla libreria.', 'success');
+        } catch (err) {
+            showToast(err.message || 'Errore nella rimozione.', 'error');
+        }
+    }
+
+    // ── Modal — Add book ──────────────────────────────────────
+    let foundBookIsbn = null;
+
+    function openAddModal() {
+        document.getElementById('isbnInput').value = '';
+        document.getElementById('searchAlert').classList.add('d-none');
+        document.getElementById('bookPreview').classList.add('d-none');
+        document.getElementById('confirmAddBtn').classList.add('d-none');
+        foundBookIsbn = null;
+        document.getElementById('addModalOverlay').classList.remove('d-none');
+        setTimeout(() => document.getElementById('isbnInput').focus(), 50);
+    }
+
+    function closeAddModal() {
+        document.getElementById('addModalOverlay').classList.add('d-none');
+    }
+
+    function closeAddModalIfOutside(e) {
+        if (e.target === document.getElementById('addModalOverlay')) closeAddModal();
+    }
+
+    async function searchIsbn() {
+        const isbn = document.getElementById('isbnInput').value.trim();
+        const alertEl = document.getElementById('searchAlert');
+        alertEl.classList.add('d-none');
+
+        if (!isbn) {
+            alertEl.textContent = 'Inserisci un ISBN.';
+            alertEl.classList.remove('d-none');
+            return;
+        }
+
+        const btn = document.getElementById('searchBtn');
+        btn.disabled    = true;
+        btn.textContent = '…';
+
+        try {
+            // Chiamiamo direttamente POST /api/books con preview=true
+            // Oppure usiamo Open Library direttamente per l'anteprima
+            const url = `https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`;
+            const res = await fetch(url);
+            const data = await res.json();
+            const key  = `ISBN:${isbn}`;
+
+            if (!data[key]) {
+                alertEl.textContent = 'Nessun libro trovato per questo ISBN.';
+                alertEl.classList.remove('d-none');
+                document.getElementById('bookPreview').classList.add('d-none');
+                document.getElementById('confirmAddBtn').classList.add('d-none');
+                return;
+            }
+
+            const book   = data[key];
+            const title  = book.title || 'Titolo sconosciuto';
+            const author = (book.authors?.[0]?.name) || 'Autore sconosciuto';
+            const year   = book.publish_date || '';
+            const cover  = book.cover?.medium || book.cover?.large || null;
+
+            // Mostra preview
+            const thumb = document.getElementById('previewThumb');
+            if (cover) {
+                thumb.outerHTML = `<img id="previewThumb" src="${cover}" class="lh-preview-thumb" alt="cover" />`;
+            } else {
+                const cc = coverClass(isbn.length);
+                thumb.className   = `lh-preview-thumb-fallback ${cc}`;
+                thumb.textContent = title.charAt(0).toUpperCase();
+            }
+
+            document.getElementById('previewTitle').textContent  = title;
+            document.getElementById('previewAuthor').textContent = author;
+            document.getElementById('previewMeta').textContent   = year ? `Anno: ${year}` : '';
+
+            document.getElementById('bookPreview').classList.remove('d-none');
+            document.getElementById('confirmAddBtn').classList.remove('d-none');
+            foundBookIsbn = isbn;
+
+        } catch {
+            alertEl.textContent = 'Errore di connessione. Riprova.';
+            alertEl.classList.remove('d-none');
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = 'Cerca';
+        }
+    }
+
+    async function confirmAdd() {
+        if (!foundBookIsbn) return;
+        const btn = document.getElementById('confirmAddBtn');
+        btn.disabled    = true;
+        btn.textContent = 'Aggiunta in corso…';
+
+        try {
+            await API.post('/api/books', { isbn: foundBookIsbn });
+            closeAddModal();
+            await Promise.all([loadBooks(), loadStats()]);
+            showToast('Libro aggiunto alla libreria!', 'success');
+        } catch (err) {
+            document.getElementById('searchAlert').textContent = err.message || 'Errore nell\'aggiunta.';
+            document.getElementById('searchAlert').classList.remove('d-none');
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = 'Aggiungi alla libreria';
+        }
+    }
+
+    // ── Toast ─────────────────────────────────────────────────
+    function showToast(msg, type = 'success') {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.className   = `lh-toast ${type}`;
+        toast.classList.remove('d-none');
+        setTimeout(() => {
+            toast.classList.add('hiding');
+            setTimeout(() => { toast.classList.add('d-none'); toast.classList.remove('hiding'); }, 300);
+        }, 3000);
+    }
+
+    // Chiudi modal con ESC
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { closeAddModal(); closeReviewModal(); }
+    });
+
+    // ── Modal — Recensione ────────────────────────────────────
+    let reviewState = { userBookId: null, reviewId: null, rating: null };
+
+    function openReviewModal(e, userBookId, reviewId, rating, comment, title) {
+        e.stopPropagation();
+        reviewState = { userBookId, reviewId, rating };
+
+        document.getElementById('reviewModalTitle').textContent  = reviewId ? 'Modifica recensione' : 'Aggiungi recensione';
+        document.getElementById('reviewModalBook').textContent   = title;
+        document.getElementById('reviewComment').value           = comment || '';
+        document.getElementById('reviewAlert').classList.add('d-none');
+
+        pickStar(rating || 0);
+        document.getElementById('reviewModalOverlay').classList.remove('d-none');
+    }
+
+    function closeReviewModal() {
+        document.getElementById('reviewModalOverlay').classList.add('d-none');
+    }
+
+    function closeReviewModalIfOutside(e) {
+        if (e.target === document.getElementById('reviewModalOverlay')) closeReviewModal();
+    }
+
+    function pickStar(value) {
+        reviewState.rating = value;
+        document.querySelectorAll('.lh-star-pick').forEach(s => {
+            s.classList.toggle('on', parseInt(s.dataset.v) <= value);
+        });
+    }
+
+    async function saveReview() {
+        const alertEl = document.getElementById('reviewAlert');
+        alertEl.classList.add('d-none');
+
+        if (!reviewState.rating) {
+            alertEl.textContent = 'Seleziona almeno una stella.';
+            alertEl.classList.remove('d-none');
+            return;
+        }
+
+        const btn = document.getElementById('saveReviewBtn');
+        btn.disabled    = true;
+        btn.textContent = 'Salvataggio…';
+
+        const body = {
+            userBookId: reviewState.userBookId,
+            rating:     reviewState.rating,
+            comment:    document.getElementById('reviewComment').value.trim() || null
+        };
+
+        try {
+            if (reviewState.reviewId) {
+                await API.put(`/api/reviews/${reviewState.reviewId}`, body);
+            } else {
+                await API.post('/api/reviews', body);
+            }
+            closeReviewModal();
+            await Promise.all([loadBooks(), loadStats()]);
+            showToast('Recensione salvata!', 'success');
+        } catch (err) {
+            alertEl.textContent = err.message || 'Errore nel salvataggio.';
+            alertEl.classList.remove('d-none');
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = 'Salva recensione';
+        }
+    }
+
+</script>
+
+</body>
+</html>

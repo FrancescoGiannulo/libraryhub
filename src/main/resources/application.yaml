@@ -7,6 +7,12 @@ application:
 spring:
   profiles:
     active: dev
+  jpa:
+    open-in-view: false
+
+logging:
+  level:
+    org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
 
 ---
 spring:

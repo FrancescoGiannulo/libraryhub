@@ -12,10 +12,14 @@ public class BookResponse {
     private Integer publishedYear;
     private String description;
     private String status;
+    private Long reviewId;
+    private Integer rating;
+    private String comment;
 
     public BookResponse(Long userBookId, Long bookId, String isbn, String title,
                         String author, String coverUrl, String genre,
-                        Integer publishedYear, String description, String status) {
+                        Integer publishedYear, String description, String status,
+                        Long reviewId, Integer rating, String comment) {
         this.userBookId = userBookId;
         this.bookId = bookId;
         this.isbn = isbn;
@@ -26,6 +30,9 @@ public class BookResponse {
         this.publishedYear = publishedYear;
         this.description = description;
         this.status = status;
+        this.reviewId = reviewId;
+        this.rating = rating;
+        this.comment = comment;
     }
 
     public Long getUserBookId() { return userBookId; }
@@ -38,4 +45,7 @@ public class BookResponse {
     public Integer getPublishedYear() { return publishedYear; }
     public String getDescription() { return description; }
     public String getStatus() { return status; }
+    public Long getReviewId() { return reviewId; }
+    public Integer getRating() { return rating; }
+    public String getComment() { return comment; }
 }

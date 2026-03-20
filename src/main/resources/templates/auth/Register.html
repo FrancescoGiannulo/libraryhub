@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registrati — LibraryHub</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link th:href="@{/css/main.css}" rel="stylesheet" />
+</head>
+<body>
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-panel-left">
+      <div>
+        <a href="/" class="auth-logo">
+          <div class="auth-logo-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <span class="auth-logo-name">LibraryHub</span>
+        </a>
+        <div class="auth-badge">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Gratuito &amp; open source
+        </div>
+        <p class="auth-tagline">Inizia a costruire<br>la tua libreria</p>
+        <p class="auth-description">Crea il tuo account gratuito e inizia<br>a tracciare ogni libro che leggi.</p>
+      </div>
+      <ul class="auth-features">
+        <li class="auth-feature-item">
+          <div class="auth-feature-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+          Gratuito e senza pubblicità
+        </li>
+        <li class="auth-feature-item">
+          <div class="auth-feature-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          I tuoi dati sono al sicuro
+        </li>
+        <li class="auth-feature-item">
+          <div class="auth-feature-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+          Dati reali da Open Library
+        </li>
+      </ul>
+    </div>
+
+    <div class="auth-panel-right">
+      <p class="auth-title">Crea il tuo account</p>
+      <p class="auth-subtitle">Ci vorranno meno di un minuto</p>
+      <div id="registerAlert" class="alert auth-alert d-none" role="alert"></div>
+      <form id="registerForm" novalidate>
+        <div class="mb-3">
+          <label for="username" class="form-label">Username</label>
+          <input type="text" id="username" class="form-control" placeholder="il_tuo_username" required minlength="3" maxlength="50" autocomplete="username" />
+          <div class="form-text">Minimo 3 caratteri</div>
+        </div>
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input type="email" id="email" class="form-control" placeholder="nome@email.com" required autocomplete="email" />
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" id="password" class="form-control" placeholder="••••••••" required minlength="8" autocomplete="new-password" />
+          <div class="form-text">Minimo 8 caratteri</div>
+        </div>
+        <div class="mb-4">
+          <label for="confirmPassword" class="form-label">Conferma password</label>
+          <input type="password" id="confirmPassword" class="form-control" placeholder="••••••••" required autocomplete="new-password" />
+        </div>
+        <button type="submit" id="registerBtn" class="btn-lh-primary">Crea account</button>
+      </form>
+      <p class="auth-switch">Hai già un account? <a th:href="@{/login}">Accedi →</a></p>
+    </div>
+  </div>
+</div>
+<script>
+  (function(){
+    if(localStorage.getItem('lh_token')){window.location.href='/library';return;}
+    const form=document.getElementById('registerForm'),btn=document.getElementById('registerBtn'),alertEl=document.getElementById('registerAlert');
+    function showAlert(m,t='danger'){alertEl.textContent=m;alertEl.className=`alert auth-alert alert-${t}`;alertEl.classList.remove('d-none');}
+    form.addEventListener('submit',async function(e){
+      e.preventDefault();alertEl.classList.add('d-none');
+      const username=document.getElementById('username').value.trim(),email=document.getElementById('email').value.trim(),
+              password=document.getElementById('password').value,confirmPassword=document.getElementById('confirmPassword').value;
+      if(!username||!email||!password||!confirmPassword){showAlert('Compila tutti i campi.');return;}
+      if(username.length<3){showAlert('Username: minimo 3 caratteri.');return;}
+      if(password.length<8){showAlert('Password: minimo 8 caratteri.');return;}
+      if(password!==confirmPassword){showAlert('Le password non coincidono.');document.getElementById('confirmPassword').classList.add('is-invalid');return;}
+      document.getElementById('confirmPassword').classList.remove('is-invalid');
+      btn.disabled=true;btn.textContent='Creazione account…';
+      try{
+        const res=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,email,password})});
+        const data=await res.json();
+        if(res.ok&&data.token){localStorage.setItem('lh_token',data.token);window.location.href='/library';}
+        else showAlert(data.message||'Registrazione fallita. Riprova.');
+      }catch{showAlert('Errore di connessione. Riprova.');}
+      finally{btn.disabled=false;btn.textContent='Crea account';}
+    });
+  })();
+</script>
+</body>
+</html>

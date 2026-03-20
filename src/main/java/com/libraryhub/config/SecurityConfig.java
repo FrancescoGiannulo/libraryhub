@@ -5,6 +5,7 @@ import com.libraryhub.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -30,12 +31,24 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)  //csrf protection disabilitata perchè con jwt stateless  non serve (lavora con i cookie di sessione)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**",
-                                "/api/auth/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs/**").permitAll()    //pagine di register e login sono pubbliche (Anche pagine di OpenAPI richiedono accesso non autenticato)
-                        .anyRequest().authenticated()   //tutto il resto richiede autenticazione
+                        // ── VIEW PAGES ───────────────
+                        .requestMatchers(HttpMethod.GET,
+                                "/", "/login", "/register", "/library", "/dashboard",
+                                "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico"
+                        ).permitAll()
+                        // ── API PUBBLICHE (già presenti) ─────────────────────
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/auth/register", "/api/auth/login", "/favicon.ico"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/reviews/book/**", "/favicon.ico"
+                        ).permitAll()
+                        // ── SWAGGER ──────────────────────────────────────────
+                        .requestMatchers(
+                                "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/favicon.ico"
+                        ).permitAll()
+                        // ── TUTTO IL RESTO richiede JWT ───────────────────────
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS) //stateless
